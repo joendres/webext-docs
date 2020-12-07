@@ -9,6 +9,11 @@ The `Address Books`__ sample extension uses this API.
 
 __ https://github.com/thundernest/sample-extensions/tree/master/addressBooks
 
+Permissions
+===========
+
+- addressBooks "Read and modify your address books and contacts"
+
 .. note::
 
   The permission ``addressBooks`` is required to use ``contacts``.
@@ -107,12 +112,13 @@ Fired when a contact is created.
 
 .. _contacts.onUpdated:
 
-onUpdated(node)
----------------
+onUpdated(node, changedProperties)
+----------------------------------
 
 Fired when a contact is changed.
 
 - ``node`` (:ref:`contacts.ContactNode`)
+- ``changedProperties`` (:ref:`contacts.PropertyChange`) *Added in Thunderbird 83*
 
 .. _contacts.onDeleted:
 
@@ -134,7 +140,7 @@ ContactNode
 
 A node representing a contact in an address book.
 
-object
+object:
 
 - ``id`` (string) The unique identifier for the node. IDs are unique within the current profile, and they remain valid even after the program is restarted.
 - ``properties`` (:ref:`contacts.ContactProperties`)
@@ -150,5 +156,16 @@ ContactProperties
 A set of properties for a particular contact. For a complete list of properties that Thunderbird uses, see https://hg.mozilla.org/comm-central/file/tip/mailnews/addrbook/public/nsIAbCard.idl
 
 It is also possible to store custom properties. The custom property name however may only use a to z, A to Z, 1 to 9 and underscores.
+
+object
+
+.. _contacts.PropertyChange:
+
+PropertyChange
+--------------
+
+*Added in Thunderbird 83*
+
+A dictionary of changed properties. Keys are the property name that changed, values are an object containing ``oldValue`` and ``newValue``. Values can be either a string or null.
 
 object

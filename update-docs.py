@@ -16,19 +16,23 @@ unique_id = 1
 def merge_objects(a, b):
     if isinstance(a, list):
         for c in a:
-            name = c.get("namespace", c.get("name"))
-            if name is None:
+            merged = False
+            if isinstance(c, dict):
+                name = c.get("namespace", c.get("name", c.get("id", c.get("$extend"))))
+                if name is not None:
+                    for d in b:
+                        if d.get("namespace", d.get("name", d.get("id", d.get("$extend")))) == name:
+                            merge_objects(c, d)
+                            merged = True
+            if not merged:
                 b.append(c)
                 continue
-            for d in b:
-                if d.get("namespace", d.get("name")) == name:
-                    merge_objects(c, d)
     elif isinstance(a, dict):
         for [e, f] in a.iteritems():
-            if e not in b:
+            if e not in b or e in ["description"]:
                 b[e] = f
                 continue
-            if e not in ["namespace", "name"]:
+            if e not in ["namespace", "name", "id", "$extend"]:
                 merge_objects(f, b[e])
     else:
         print "Unexpected item:", a
@@ -73,6 +77,8 @@ def get_type(obj, name):
 
 
 def link_ref(ref):
+    if ref == "extensionTypes.Date":
+        return "`Date <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date>`_"
     for moz_namespace in ["extension.", "extensionTypes."]:
         if ref.startswith(moz_namespace):
             name = ref[len(moz_namespace):]
@@ -83,6 +89,14 @@ def link_ref(ref):
         return ":ref:`%s`" % ref
     else:
         return ":ref:`%s.%s`" % (current_namespace_name, ref)
+
+
+def format_addition(obj):
+    if "changed" in obj:
+        return "*Changed in Thunderbird %s*" % obj["changed"]
+    if "backported" in obj:
+        return "*Added in Thunderbird %s, backported to %s*" % (obj["added"], obj["backported"])
+    return "*Added in Thunderbird %s*" % obj["added"]
 
 
 def format_member(name, value):
@@ -97,7 +111,9 @@ def format_member(name, value):
     else:
         type_string = "%s"
 
-    if value.get("deprecated"):
+    if "unsupported" in value:
+        type_string += " **Unsupported.**"
+    elif "deprecated" in value:
         type_string += " **Deprecated.**"
 
     if "type" in value or "$ref" in value:
@@ -111,7 +127,9 @@ def format_member(name, value):
 
     if "description" in value:
         parts.append(replace_code(value["description"]))
-    
+
+    if "added" in value or "changed" in value:
+        parts.append(format_addition(value))
     return " ".join(parts)
 
 
@@ -126,6 +144,11 @@ def format_enum(name, value):
         "",
     ]
     for enum_value in value.get("enum"):
+        if "enumChanges" in value:
+            changes = value.get("enumChanges")
+            if enum_value in changes:
+                enum_lines.append("- ``%s`` %s" % (enum_value, format_addition(changes.get(enum_value))))
+                continue
         enum_lines.append("- ``%s``" % enum_value)
     enum_lines.append("")
     return enum_lines
@@ -163,7 +186,7 @@ def format_object(name, obj):
 
 def format_params(function, callback=None):
     params = []
-    for param in function["parameters"]:
+    for param in function.get("parameters", []):
         if param["name"] == callback:
             continue
         if param.get("optional", False):
@@ -179,19 +202,32 @@ def format_permissions(obj):
 
     lines = []
     name = obj.get("namespace", obj.get("name"))
-    for permission in obj["permissions"]:
+    if len(obj["permissions"]) == 1:
+        permission = obj["permissions"][0]
         if permission.startswith("manifest:"):
             permission = permission[9:]
-            text = "  A manifest entry named ``%s`` is required to use ``%s``."
+            text = "  A manifest entry named ``%s`` is required to use ``%s``." % (permission, name)
         else:
-            text = "  The permission ``%s`` is required to use ``%s``."
-        lines.extend([
-            "",
-            ".. note::",
-            "",
-            text % (permission, name),
-            "",
-        ])
+            text = "  The permission ``%s`` is required to use ``%s``." % (permission, name)
+    else:
+        permissions = ""
+        for i in range(0, len(obj["permissions"])):
+            permission = obj["permissions"][i]
+            if i > 0:
+                if i + 1 == len(obj["permissions"]):
+                    permissions += " and "
+                else:
+                    permissions += ", "
+            permissions += "``%s``" % permission
+        text = "  The permissions %s are required to use ``%s``." % (permissions, name)
+
+    lines.extend([
+        "",
+        ".. note::",
+        "",
+        text,
+        "",
+    ])
     return lines
 
 
@@ -262,19 +298,15 @@ def format_namespace(namespace, manifest_namespace=None):
             ))
             enum_lines = []
 
-            if "added" in function:
-                lines.append("*Added in Thunderbird %s*" % function["added"])
-                lines.append("")
-
-            if "backported" in function:
-                lines.append("*Backported to Thunderbird %s*" % function["backported"])
+            if "added" in function or "changed" in function:
+                lines.append(format_addition(function))
                 lines.append("")
 
             if "description" in function:
                 lines.append(replace_code(function["description"]))
                 lines.append("")
 
-            if len(function["parameters"]):
+            if len(function.get("parameters", [])):
                 for param in function["parameters"]:
                     if async == param["name"]:
                         if len(param["parameters"]) > 0:
@@ -312,14 +344,14 @@ def format_namespace(namespace, manifest_namespace=None):
             ))
 
             if "added" in event:
-                lines.append("*Added in Thunderbird %s*" % event["added"])
+                lines.append(format_addition(event))
                 lines.append("")
 
             if "description" in event:
                 lines.append(replace_code(event["description"]))
                 lines.append("")
 
-            if len(event["parameters"]):
+            if len(event.get("parameters", [])):
                 for param in event["parameters"]:
                     lines.extend(format_object(param["name"], param))
                 lines.append("")
@@ -354,12 +386,21 @@ def format_namespace(namespace, manifest_namespace=None):
                 label="%s.%s" % (current_namespace_name, type_["id"])
             ))
 
+            if "added" in type_:
+                lines.append(format_addition(type_))
+                lines.append("")
+
             if "description" in type_:
                 lines.append(replace_code(type_["description"]))
                 lines.append("")
 
             if "type" in type_:
-                lines.append(get_type(type_, type_["id"]))
+                if (type_["type"] == "object" and
+                        "isInstanceOf" not in type_ and
+                        ("properties" in type_ or "functions" in type_)):
+                    lines.append("object:")
+                else:
+                    lines.append(get_type(type_, type_["id"]))
                 lines.append("")
                 enum_lines.extend(format_enum(type_["id"], type_))
 
@@ -388,8 +429,15 @@ def format_namespace(namespace, manifest_namespace=None):
                         lines.extend(format_object(key, value))
                         enum_lines.extend(format_enum(key, value))
                         unique_id += 1
-                lines.append("")
 
+            if "functions" in type_:
+                for function in sorted(type_["functions"], key=lambda f: f["name"]):
+                    lines.append("- ``%s(%s)``" % (function["name"], format_params(function)))
+                    description = function.get("description", "")
+                    if description:
+                        lines[-1] += " %s" % description
+
+            lines.append("")
             lines.extend(enum_lines)
 
     index = 0
@@ -430,7 +478,12 @@ def format_manifest_namespace(manifest):
         if type_.get("$extend", None) == "WebExtensionManifest":
             for [name, value] in type_["properties"].items():
                 property_lines.extend(format_object(name, value))
-        if type_.get("$extend", None) in ["OptionalPermission", "Permission"]:
+        if type_.get("$extend", None) in [
+            "OptionalPermission",
+            "OptionalPermissionNoPrompt",
+            "Permission",
+            "PermissionNoPrompt"
+        ]:
             for choice in type_["choices"]:
                 for value in choice["enum"]:
                     if value in permission_strings:
@@ -491,20 +544,16 @@ if __name__ == "__main__":
             with open(os.path.join(OVERLAY_DIR, filename + ".json")) as fp_overlay:
                 overlay = json.load(fp_overlay)
                 merge_objects(overlay, document)
+                # print(json.dumps(document, indent=2))
 
         manifest_namespace = None
         for namespace in document:
             if namespace["namespace"] == "manifest":
                 manifest_namespace = format_manifest_namespace(namespace)
+
+        for namespace in document:
+            if namespace["namespace"] == "manifest":
                 continue
 
-            with open(os.path.join(DEST_DIR, namespace["namespace"] + ".rst"), "w") as fp_output:
-                fp_output.write(format_namespace(namespace, manifest_namespace=manifest_namespace))
-                manifest_namespace = None
-
-        if manifest_namespace is not None:
-            namespace = {
-                "namespace": filename
-            }
             with open(os.path.join(DEST_DIR, namespace["namespace"] + ".rst"), "w") as fp_output:
                 fp_output.write(format_namespace(namespace, manifest_namespace=manifest_namespace))

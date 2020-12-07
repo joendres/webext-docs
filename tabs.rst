@@ -38,6 +38,44 @@ Returns a `Promise`_ fulfilled with:
 
 - :ref:`tabs.Tab`
 
+.. _tabs.connect:
+
+connect(tabId, [connectInfo])
+-----------------------------
+
+*Added in Thunderbird 82*
+
+Connects to the content script(s) in the specified tab. The `runtime.onConnect <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onConnect>`_ event is fired in each content script running in the specified tab for the current extension. For more details, see `Content Script Messaging <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts>`_.
+
+- ``tabId`` (integer)
+- [``connectInfo``] (object)
+
+  - [``frameId``] (integer) Open a port to a specific frame identified by ``frameId`` instead of all frames in the tab.
+  - [``name``] (string) Will be passed into onConnect for content scripts that are listening for the connection event.
+
+Returns a `Promise`_ fulfilled with:
+
+- :ref:`runtime.Port` A port that can be used to communicate with the content scripts running in the specified tab.
+
+.. _tabs.sendMessage:
+
+sendMessage(tabId, message, [options])
+--------------------------------------
+
+*Added in Thunderbird 82*
+
+Sends a single message to the content script(s) in the specified tab, with an optional callback to run when a response is sent back.  The `runtime.onMessage <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage>`_ event is fired in each content script running in the specified tab for the current extension.
+
+- ``tabId`` (integer)
+- ``message`` (any)
+- [``options``] (object)
+
+  - [``frameId``] (integer) Send a message to a specific frame identified by ``frameId`` instead of all frames in the tab.
+
+Returns a `Promise`_ fulfilled with:
+
+- any The JSON response object sent by the handler of the message. If an error occurs while connecting to the specified tab, the callback will be called with no arguments and `runtime.lastError <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/lastError>`_ will be set to the error message.
+
 .. _tabs.create:
 
 create(createProperties)
@@ -49,7 +87,7 @@ Creates a new tab.
 
   - [``active``] (boolean) Whether the tab should become the active tab in the window. Does not affect whether the window is focused (see :ref:`windows.update`). Defaults to ``true``.
   - [``index``] (integer) The position the tab should take in the window. The provided value will be clamped to between zero and the number of tabs in the window.
-  - [``selected``] (boolean) **Deprecated.** Whether the tab should become the selected tab in the window. Defaults to ``true``
+  - [``selected``] (boolean) **Unsupported.** Whether the tab should become the selected tab in the window. Defaults to ``true``
   - [``url``] (string) The URL to navigate the tab to initially. Fully-qualified URLs must include a scheme (i.e. 'http://www.google.com', not 'www.google.com'). Relative URLs will be relative to the current page within the extension. Defaults to the New Tab Page.
   - [``windowId``] (integer) The window to create the new tab in. Defaults to the current window.
 
@@ -155,6 +193,8 @@ Closes one or more tabs.
 executeScript([tabId], details)
 -------------------------------
 
+*Changed in Thunderbird 77: with the "compose" permission, this now works in the document of email messages during composition.*
+
 Injects JavaScript code into a page. For details, see the `programmatic injection <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts>`_ section of the content scripts doc.
 
 - [``tabId``] (integer) The ID of the tab in which to run the script; defaults to the active tab of the current window.
@@ -169,6 +209,8 @@ Returns a `Promise`_ fulfilled with:
 insertCSS([tabId], details)
 ---------------------------
 
+*Changed in Thunderbird 77: with the "compose" permission, this now works in the document of email messages during composition.*
+
 Injects CSS into a page. For details, see the `programmatic injection <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts>`_ section of the content scripts doc.
 
 - [``tabId``] (integer) The ID of the tab in which to insert the CSS; defaults to the active tab of the current window.
@@ -178,6 +220,8 @@ Injects CSS into a page. For details, see the `programmatic injection <https://d
 
 removeCSS([tabId], details)
 ---------------------------
+
+*Changed in Thunderbird 77: with the "compose" permission, this now works in the document of email messages during composition.*
 
 Removes injected CSS from a page. For details, see the `programmatic injection <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts>`_ section of the content scripts doc.
 
@@ -297,12 +341,12 @@ Types
 Tab
 ---
 
-object
+object:
 
 - ``active`` (boolean) Whether the tab is active in its window. (Does not necessarily mean the window is focused.)
 - ``highlighted`` (boolean) Whether the tab is highlighted. Works as an alias of active
 - ``index`` (integer) The zero-based index of the tab within its window.
-- ``selected`` (boolean) **Deprecated.** Whether the tab is selected.
+- ``selected`` (boolean) **Unsupported.** Whether the tab is selected.
 - [``favIconUrl``] (string) The URL of the tab's favicon. This property is only present if the extension's manifest includes the ``"tabs"`` permission. It may also be an empty string if the tab is loading.
 - [``height``] (integer) The height of the tab in pixels.
 - [``id``] (integer) The ID of the tab. Tab IDs are unique within a browser session. Under some circumstances a Tab may not be assigned an ID. Tab ID can also be set to :ref:`tabs.TAB_ID_NONE` for apps and devtools windows.
@@ -320,9 +364,9 @@ TabStatus
 
 Whether the tabs have completed loading.
 
-`string <enum_TabStatus_66_>`_
+`string <enum_TabStatus_74_>`_
 
-.. _enum_TabStatus_66:
+.. _enum_TabStatus_74:
 
 Values for TabStatus:
 
@@ -336,7 +380,7 @@ UpdateFilter
 
 An object describing filters to apply to tabs.onUpdated events.
 
-object
+object:
 
 - [``properties``] (array of :ref:`tabs.UpdatePropertyName`) A list of property names. Events that do not match any of the names will be filtered out.
 - [``tabId``] (integer)
@@ -350,9 +394,9 @@ UpdatePropertyName
 
 Event names supported in onUpdated.
 
-`string <enum_UpdatePropertyName_70_>`_
+`string <enum_UpdatePropertyName_78_>`_
 
-.. _enum_UpdatePropertyName_70:
+.. _enum_UpdatePropertyName_78:
 
 Values for UpdatePropertyName:
 
@@ -367,9 +411,9 @@ WindowType
 
 The type of window.
 
-`string <enum_WindowType_70_>`_
+`string <enum_WindowType_78_>`_
 
-.. _enum_WindowType_70:
+.. _enum_WindowType_78:
 
 Values for WindowType:
 

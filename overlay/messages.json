@@ -29,8 +29,9 @@
       {
         "name": "getRaw",
         "added": "72",
+        "backported": "68.7",
         "returns": {
-          "$ref": "MessageList"
+          "type": "string"
         }
       },
       {
@@ -39,7 +40,17 @@
         "backported": "68.2",
         "returns": {
           "$ref": "MessageList"
-        }
+        },
+        "parameters": [
+          {
+            "name": "queryInfo",
+            "properties": {
+              "tags": {
+                "added": "74"
+              }
+            }
+          }
+        ]
       },
       {
         "name": "listTags",
@@ -49,6 +60,26 @@
             "$ref": "MessageTag"
           }
         }
+      },
+      {
+        "name": "update",
+        "parameters": [
+          {
+            "name": "newProperties",
+            "properties": {
+              "junk": {
+                "added": "73",
+                "backported": "68.7"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "events": [
+      {
+        "name": "onNewMailReceived",
+        "added": "75"
       }
     ],
     "types": [
@@ -94,13 +125,24 @@
             }
           },
           "folder": {
-            "$ref": "folders.MailFolder"
+            "$ref": "folders.MailFolder",
+            "description": "The ``accountsRead`` permission is required."
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "junk": {
+            "type": "boolean",
+            "added": "74"
+          },
+          "junkScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "added": "74"
           }
         }
       },

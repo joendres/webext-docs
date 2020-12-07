@@ -41,6 +41,10 @@ Returns a `Promise`_ fulfilled with:
 
 - :ref:`messages.MessageList`
 
+.. note::
+
+  The permission ``accountsRead`` is required to use ``list``.
+
 .. _messages.continueList:
 
 continueList(messageListId)
@@ -85,7 +89,7 @@ Returns a `Promise`_ fulfilled with:
 getRaw(messageId)
 -----------------
 
-*Added in Thunderbird 72*
+*Added in Thunderbird 72, backported to 68.7*
 
 Returns the unmodified source of a message.
 
@@ -93,16 +97,14 @@ Returns the unmodified source of a message.
 
 Returns a `Promise`_ fulfilled with:
 
-- :ref:`messages.MessageList`
+- string
 
 .. _messages.query:
 
 query(queryInfo)
 ----------------
 
-*Added in Thunderbird 69*
-
-*Backported to Thunderbird 68.2*
+*Added in Thunderbird 69, backported to 68.2*
 
 Gets all messages that have the specified properties, or all messages if no properties are specified.
 
@@ -111,13 +113,14 @@ Gets all messages that have the specified properties, or all messages if no prop
   - [``author``] (string) Returns only messages with this value matching the author.
   - [``body``] (string) Returns only messages with this value in the body of the mail.
   - [``flagged``] (boolean) Returns only flagged (or unflagged if false) messages.
-  - [``folder``] (:ref:`folders.MailFolder`) Returns only messages from the specified folder.
-  - [``fromDate``] (`Date <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/extensionTypes/Date>`_) Returns only messages with a date after this value.
+  - [``folder``] (:ref:`folders.MailFolder`) Returns only messages from the specified folder. The ``accountsRead`` permission is required.
+  - [``fromDate``] (`Date <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date>`_) Returns only messages with a date after this value.
   - [``fromMe``] (boolean) Returns only messages with the author matching any configured identity.
   - [``fullText``] (string) Returns only messages with this value somewhere in the mail (subject, body or author).
   - [``recipients``] (string) Returns only messages with this value matching one or more recipients.
   - [``subject``] (string) Returns only messages with this value matching the subject.
-  - [``toDate``] (`Date <https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/extensionTypes/Date>`_) Returns only messages with a date before this value.
+  - [``tags``] (:ref:`messages.TagsDetail`) Returns only messages with the specified tags. For a list of available tags, call the listTags method. Querying for messages that must *not* have a tag does not work. *Added in Thunderbird 74*
+  - [``toDate``] (`Date <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date>`_) Returns only messages with a date before this value.
   - [``toMe``] (boolean) Returns only messages with one or more recipients matching any configured identity.
   - [``unread``] (boolean) Returns only unread (or read if false) messages.
 
@@ -136,6 +139,7 @@ Marks or unmarks a message as read, flagged, or tagged.
 - ``newProperties`` (object)
 
   - [``flagged``] (boolean) Marks the message as flagged or unflagged.
+  - [``junk``] (boolean) Marks the message as junk or not junk. *Added in Thunderbird 73, backported to 68.7*
   - [``read``] (boolean) Marks the message as read or unread.
   - [``tags``] (array of string) Sets the tags on the message. For a list of available tags, call the listTags method.
 
@@ -151,7 +155,7 @@ Moves messages to a specified folder.
 
 .. note::
 
-  The permission ``messagesMove`` is required to use ``move``.
+  The permissions ``accountsRead`` and ``messagesMove`` are required to use ``move``.
 
 .. _messages.copy:
 
@@ -165,7 +169,7 @@ Copies messages to a specified folder.
 
 .. note::
 
-  The permission ``messagesMove`` is required to use ``copy``.
+  The permissions ``accountsRead`` and ``messagesMove`` are required to use ``copy``.
 
 .. _messages.delete:
 
@@ -207,6 +211,25 @@ Returns a `Promise`_ fulfilled with:
 
 .. _Promise: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 
+Events
+======
+
+.. _messages.onNewMailReceived:
+
+onNewMailReceived(folder, messages)
+-----------------------------------
+
+*Added in Thunderbird 75*
+
+Fired when a new message is received, and has been through junk classification and message filters.
+
+- ``folder`` (:ref:`folders.MailFolder`)
+- ``messages`` (:ref:`messages.MessageList`)
+
+.. note::
+
+  The permission ``accountsRead`` is required to use ``onNewMailReceived``.
+
 Types
 =====
 
@@ -215,15 +238,17 @@ Types
 MessageHeader
 -------------
 
-object
+object:
 
 - ``author`` (string)
 - ``bccList`` (array of string)
 - ``ccList`` (array of string)
 - ``date`` (date)
 - ``flagged`` (boolean)
-- ``folder`` (:ref:`folders.MailFolder`)
+- ``folder`` (:ref:`folders.MailFolder`) The ``accountsRead`` permission is required.
 - ``id`` (integer)
+- ``junk`` (boolean) *Added in Thunderbird 74*
+- ``junkScore`` (integer) *Added in Thunderbird 74*
 - ``read`` (boolean)
 - ``recipients`` (array of string)
 - ``subject`` (string)
@@ -236,7 +261,7 @@ MessageList
 
 See :doc:`how-to/messageLists` for more information.
 
-object
+object:
 
 - ``id`` (string)
 - ``messages`` (array of :ref:`messages.MessageHeader`)
@@ -248,7 +273,7 @@ MessagePart
 
 Represents an email message "part", which could be the whole message
 
-object
+object:
 
 - [``body``] (string) The content of the part
 - [``contentType``] (string)
@@ -263,9 +288,28 @@ object
 MessageTag
 ----------
 
-object
+object:
 
 - ``color`` (string) Tag color
 - ``key`` (string) Distinct tag identifier – use this string when referring to a tag
 - ``ordinal`` (string) Custom sort string (usually empty)
 - ``tag`` (string) Human-readable tag name
+
+.. _messages.TagsDetail:
+
+TagsDetail
+----------
+
+Used for filtering messages by tag in various methods. Note that functions using this type may have a partial implementation.
+
+object:
+
+- ``mode`` (`string <enum_mode_59_>`_) Whether all of the tag filters must apply, or any of them.
+- ``tags`` (object) Object keys are tags to filter on, values are ``true`` if the message must have the tag, or ``false`` if it must not have the tag. For a list of available tags, call the :ref:`messages.listTags` method.
+
+.. _enum_mode_59:
+
+Values for mode:
+
+- ``all``
+- ``any``

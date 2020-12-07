@@ -8,7 +8,7 @@ ESR. It is similar to Firefox's `browserAction API`__ and can be combined with t
 
 __ https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/browserAction
 
-Use toolbar actions to put icons in the mail window toolbar. In addition to its icon, a toolbar action can also have a tooltip, a badge, and a popup. This namespace is called browserAction for compatibility with browser WebExtensions.
+Use toolbar actions to put icons in the message display toolbar. In addition to its icon, a toolbar action can also have a tooltip, a badge, and a popup.
 
 Manifest file properties
 ========================
@@ -178,12 +178,13 @@ Events
 
 .. _messageDisplayAction.onClicked:
 
-onClicked(tabId)
-----------------
+onClicked(tab, [info])
+----------------------
 
 Fired when a toolbar action icon is clicked.  This event will not fire if the toolbar action has a popup.
 
-- ``tabId`` (integer)
+- ``tab`` (:ref:`tabs.Tab`) *Added in Thunderbird 74.0b2*
+- [``info``] (:ref:`messageDisplayAction.OnClickData`) *Added in Thunderbird 74.0b2*
 
 Types
 =====
@@ -202,7 +203,7 @@ Details
 
 Specifies to which tab or window the value should be set, or from which one it should be retrieved. If no tab nor window is specified, the global value is set or retrieved.
 
-object
+object:
 
 - [``tabId``] (integer) When setting a value, it will be specific to the specified tab, and will automatically reset when the tab navigates. When getting, specifies the tab to get the value from; if there is no tab-specific value, the window one will be inherited.
 - [``windowId``] (integer) When setting a value, it will be specific to the specified window. When getting, specifies the window to get the value from; if there is no window-specific value, the global one will be inherited.
@@ -215,3 +216,27 @@ ImageDataType
 Pixel data for an image. Must be an ImageData object (for example, from a ``canvas`` element).
 
 `ImageData <https://developer.mozilla.org/en-US/docs/Web/API/ImageData>`_
+
+.. _messageDisplayAction.OnClickData:
+
+OnClickData
+-----------
+
+*Added in Thunderbird 74.0b2*
+
+Information sent when a message display action is clicked.
+
+object:
+
+- ``modifiers`` (array of `string <enum_modifiers_21_>`_) An array of keyboard modifiers that were held while the menu item was clicked.
+- [``button``] (integer) An integer value of button by which menu item was clicked.
+
+.. _enum_modifiers_21:
+
+Values for modifiers:
+
+- ``Shift``
+- ``Alt``
+- ``Command``
+- ``Ctrl``
+- ``MacCtrl``

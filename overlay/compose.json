@@ -1,0 +1,129 @@
+[
+  {
+    "namespace": "compose",
+    "types": [
+      {
+        "id": "ComposeRecipientList",
+        "added": "74"
+      },
+      {
+        "id": "ComposeDetails",
+        "properties": {
+          "identityId": {
+            "added": "76"
+          },
+          "followupTo": {
+            "added": "74"
+          },
+          "newsgroups": {
+            "added": "74"
+          },
+          "isPlainText": {
+            "added": "75"
+          },
+          "plainTextBody": {
+            "added": "75"
+          },
+          "attachments": {
+            "added": "82"
+          }
+        }
+      },
+      {
+        "name": "ComposeAttachment",
+        "added": "78",
+        "properties": {
+          "size": {
+            "added": "83"
+          }
+        }
+      }
+    ],
+    "functions": [
+      {
+        "name": "beginNew",
+        "changed": "77: return value added",
+        "parameters": [
+          {
+            "name": "messageId",
+            "added": 84
+          }
+        ],
+        "returns": {
+          "$ref": "tabs.Tab"
+        }
+      },
+      {
+        "name": "beginForward",
+        "changed": "77: return value added",
+        "returns": {
+          "$ref": "tabs.Tab"
+        }
+      },
+      {
+        "name": "beginReply",
+        "changed": "77: return value added",
+        "parameters": [
+          {
+            "name": "details",
+            "added": "76"
+          }
+        ],
+        "returns": {
+          "$ref": "tabs.Tab"
+        }
+      },
+      {
+        "name": "getComposeDetails",
+        "added": "74",
+        "returns": {
+          "$ref": "ComposeDetails"
+        }
+      },
+      {
+        "name": "setComposeDetails",
+        "added": "74"
+      },
+      {
+        "name": "listAttachments",
+        "added": "78"
+      },
+      {
+        "name": "addAttachment",
+        "added": "78"
+      },
+      {
+        "name": "updateAttachment",
+        "added": "78"
+      },
+      {
+        "name": "removeAttachment",
+        "added": "78"
+      }
+    ],
+    "events": [
+      {
+        "name": "onBeforeSend",
+        "added": "74",
+        "parameters": [
+          {
+            "name": "tab",
+            "added": "74.0b2"
+          }
+        ]
+      },
+      {
+        "name": "onAttachmentAdded",
+        "added": "78"
+      },
+      {
+        "name": "onAttachmentRemoved",
+        "added": "78"
+      },
+      {
+        "name": "onIdentityChanged",
+        "added": "78.0b2"
+      }
+    ]
+  }
+]

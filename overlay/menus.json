@@ -1,0 +1,38 @@
+[
+  {
+    "namespace": "menus",
+    "types": [
+      {
+        "id": "ContextType",
+        "enumChanges": {
+          "compose_attachments": {
+            "added": 83
+          }
+        }
+      },
+      {
+        "id": "OnClickData",
+        "properties": {
+          "attachments": {
+            "added": 83
+          }
+        }
+      }
+    ],
+    "events": [
+      {
+        "name": "onShown",
+        "parameters": [
+          {
+            "name": "info",
+            "properties": {
+              "attachments": {
+                "added": 83
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

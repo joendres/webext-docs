@@ -103,6 +103,10 @@ Returns a `Promise`_ fulfilled with:
 
 - :ref:`messages.MessageList`
 
+.. note::
+
+  The permission ``messagesRead`` is required to use ``getSelectedMessages``.
+
 .. _mailTabs.setQuickFilter:
 
 setQuickFilter([tabId], properties)
@@ -117,7 +121,7 @@ Sets the Quick Filter user interface based on the options specified.
   - [``contact``] (boolean) Shows only messages from people in the address book.
   - [``flagged``] (boolean) Shows only flagged messages.
   - [``show``] (boolean) Shows or hides the Quick Filter bar.
-  - [``tags``] (boolean or :ref:`mailTabs.QuickFilterTagsDetail`) Shows only messages with tags on them.
+  - [``tags``] (boolean or :ref:`messages.TagsDetail`) Shows only messages with tags on them.
   - [``text``] (:ref:`mailTabs.QuickFilterTextDetail`) Shows only messages matching the supplied text.
   - [``unread``] (boolean) Shows only unread messages.
 
@@ -128,10 +132,13 @@ Events
 
 .. _mailTabs.onDisplayedFolderChanged:
 
-onDisplayedFolderChanged()
---------------------------
+onDisplayedFolderChanged(tab, displayedFolder)
+----------------------------------------------
 
 Fired when the displayed folder changes in any mail tab.
+
+- ``tab`` (:ref:`tabs.Tab`) *Changed in Thunderbird 76, previously just the tab's ID*
+- ``displayedFolder`` (:ref:`folders.MailFolder`)
 
 .. note::
 
@@ -139,10 +146,13 @@ Fired when the displayed folder changes in any mail tab.
 
 .. _mailTabs.onSelectedMessagesChanged:
 
-onSelectedMessagesChanged()
----------------------------
+onSelectedMessagesChanged(tab, selectedMessages)
+------------------------------------------------
 
 Fired when the selected messages change in any mail tab.
+
+- ``tab`` (:ref:`tabs.Tab`) *Changed in Thunderbird 76, previously just the tab's ID*
+- ``selectedMessages`` (:ref:`messages.MessageList`)
 
 .. note::
 
@@ -156,10 +166,10 @@ Types
 MailTab
 -------
 
-object
+object:
 
 - ``active`` (boolean)
-- ``displayedFolder`` (:ref:`folders.MailFolder`)
+- ``displayedFolder`` (:ref:`folders.MailFolder`) The ``accountsRead`` permission is required.
 - ``folderPaneVisible`` (boolean)
 - ``id`` (integer)
 - ``layout`` (`string <enum_layout_28_>`_)
@@ -209,29 +219,12 @@ Values for sortType:
 - ``received``
 - ``correspondent``
 
-.. _mailTabs.QuickFilterTagsDetail:
-
-QuickFilterTagsDetail
----------------------
-
-object
-
-- ``mode`` (`string <enum_mode_33_>`_) Whether all of the tag filters must apply, or any of them.
-- ``tags`` (object) Object keys are tags to filter on, values are ``true`` if the message must have the tag, or ``false`` if it must not have the tag. For a list of available tags, call the :ref:`messages.listTags` method.
-
-.. _enum_mode_33:
-
-Values for mode:
-
-- ``all``
-- ``any``
-
 .. _mailTabs.QuickFilterTextDetail:
 
 QuickFilterTextDetail
 ---------------------
 
-object
+object:
 
 - ``text`` (string) String to match against the ``recipients``, ``author``, ``subject``, or ``body``.
 - [``author``] (boolean) Shows messages where ``text`` matches the author.
